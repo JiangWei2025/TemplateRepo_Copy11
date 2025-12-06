@@ -1,5 +1,8 @@
 name: Apply Default Branch Protection (Manual)
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:   # ← 手動トリガー
 
