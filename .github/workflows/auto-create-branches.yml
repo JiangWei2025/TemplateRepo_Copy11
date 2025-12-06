@@ -1,0 +1,36 @@
+
+# ============================================
+# 自動で dev / qa ブランチを作成するワークフロー
+# （テンプレートから作成された新規リポジトリで使用）
+# （github-actions[bot] に Push 権限付与済み）
+# ============================================
+
+name: Auto Create Branches   # ワークフロー名
+
+permissions:
+  contents: write            # ブランチ作成・push に必須
+
+on:
+  workflow_dispatch:         # 手動実行トリガー
+                             # ※ テンプレートから生成された直後は
+                             #    push トリガーが動かないため、
+                             #    手動実行が最も安全な方法
+
+jobs:
+  create-branches:
+    runs-on: ubuntu-latest   # GitHub が用意する Linux 実行環境
+
+    steps:
+      - name: リポジトリをチェックアウト
+        # リポジトリの main ブランチを取得
+        uses: actions/checkout@v3
+
+      - name: dev ブランチを作成してプッシュ
+        run: |
+          git checkout -b dev           # main から dev ブランチを新規作成
+          git push origin dev           # origin（GitHub）へ dev をプッシュ
+        
+      - name: qa ブランチを作成してプッシュ
+        run: |
+          git checkout -b qa            # main から qa ブランチを新規作成
+          git push origin qa            # origin（GitHub）へ qa をプッシュ

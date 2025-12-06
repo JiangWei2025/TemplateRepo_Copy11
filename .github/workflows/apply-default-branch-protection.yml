@@ -1,0 +1,66 @@
+name: Apply Default Branch Protection (Manual)
+
+on:
+  workflow_dispatch:   # ← 手動トリガー
+
+jobs:
+  apply-protection:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ======================================================
+      # GitHub Script を使って GitHub API を呼び出す
+      # このリポジトリの main ブランチに保護ルールを適用する
+      #
+      # 注意：
+      #   - この workflow は「このリポジトリのみ」を対象とするため
+      #     GitHub が自動生成する secrets.GITHUB_TOKEN で十分。
+      # ======================================================
+      - name: Apply branch protection to main
+        uses: actions/github-script@v7
+        with:
+          script: |
+            // ------------------------------------------------
+            // 現在実行中のリポジトリ情報を取得
+            // owner: 組織またはユーザー名
+            // repo : このリポジトリ名
+            // ------------------------------------------------
+            const owner = context.repo.owner;
+            const repo  = context.repo.repo;
+
+            // ------------------------------------------------
+            // 1. マージ方法を制御
+            //    - Rebase merge を禁止
+            //    - Squash merge を許可
+            //    - 通常の merge commit を許可（必要なら false に変更可）
+            // ------------------------------------------------
+            await github.rest.repos.update({
+              owner: owner,
+              repo: repo,
+              allow_rebase_merge: false,   // Rebase merge 禁止
+              allow_squash_merge: true,    // Squash merge 許可
+              allow_merge_commit: true     // Merge commit 許可
+            });
+
+            // ------------------------------------------------
+            // 2. main ブランチに保護ルールを適用
+            //    - 管理者も保護対象
+            //    - 最低 1 名のレビュー承認が必要
+            //    - ステータスチェックは要求しない（必要なら後で追加可能）
+            // ------------------------------------------------
+            await github.rest.repos.updateBranchProtection({
+              owner: owner,
+              repo: repo,
+              branch: "main",
+
+              required_status_checks: null,     // 必須チェックなし（必要なら設定可能）
+              enforce_admins: true,             // 管理者にも適用
+
+              required_pull_request_reviews: {
+                required_approving_review_count: 1  // 承認最低 1 名
+              },
+
+              restrictions: null                // Push 制限なし（必要なら追加可能）
+            });
+
+            console.log(`Branch protection applied to ${owner}/${repo} on 'main'.`);
